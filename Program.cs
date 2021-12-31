@@ -2,8 +2,11 @@
 using Nethereum.ABI;
 using System;
 using Nethereum.Signer;
+using Nethereum.Signer.EIP712;
 using System.Numerics;
 using System.Security.Cryptography;
+using System.Collections.Generic;
+using Nethereum.Util;
 
 
 namespace NethereumSample
@@ -19,9 +22,50 @@ namespace NethereumSample
             return new BigInteger(number);
         }
 
+        public static string CancelSignature(string[] orders)
+        {
+            var privateKey = "YOUR_PRIVATE_KEY";
+            var signer = new Eip712TypedDataSigner();
+            var typedData = new TypedData
+            {
+                Domain = new Domain
+                {
+                    Name = "CancelOrderSportX",
+                    Version = "1.0",
+                    ChainId = 137,
+                },
+                Types = new Dictionary<string, MemberDescription[]>
+                {
+                    ["EIP712Domain"] = new[]
+                   {
+                        new MemberDescription {Name = "name", Type = "string"},
+                        new MemberDescription {Name = "version", Type = "string"},
+                        new MemberDescription {Name = "chainId", Type = "uint256"},
+                    },
+                    ["Details"] = new[]
+                   {
+                        new MemberDescription {Name = "message", Type = "string"},
+                        new MemberDescription {Name = "orders", Type = "string[]"},
+                    },
+                },
+                PrimaryType = "Details",
+                Message = new[]
+               {
+                    new MemberValue {TypeName = "string", Value = "Are you sure you want to cancel these orders"},
+                    new MemberValue
+                    {
+                        TypeName = "string[]", Value = orders
+                    },
+                }
+            };
+            var result = signer.EncodeTypedData(typedData);
+            var signature = new EthECKey(privateKey).SignAndCalculateV(Sha3Keccack.Current.CalculateHash(result));
+            return EthECDSASignature.CreateStringSignature(signature);
+        }
+
         static void Main(string[] args)
         {
-            var privateKey = "YOUR_PRIVATE_KEY_HERE";
+            var privateKey = "YOUR_PRIVATE_KEY";
             var signer = new EthereumMessageSigner();
             var abiEncode = new ABIEncode();
             var orderHash = abiEncode.GetSha3ABIEncodedPacked(
@@ -39,6 +83,8 @@ namespace NethereumSample
             Console.WriteLine("Order Hash: " + orderHash.ToHex());
             Console.WriteLine("Signature: " + signature.ToString());
             Console.WriteLine("Random bytes: " + Random32Bytes());
+            var orders = new string[] {"0x4ead6ef92741cd0b6e1ea32cb1d9586a85165e8bd780ab6f897992428c357bf1"};
+            Console.WriteLine("Cancel signature: " + CancelSignature(orders));
         }
     }
 }
