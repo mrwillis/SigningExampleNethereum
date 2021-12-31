@@ -1,44 +1,48 @@
 ﻿using Nethereum.Hex.HexConvertors.Extensions;
-using Nethereum.ABI;
-using System;
-using Nethereum.Signer;
 using System.Numerics;
-using System.Security.Cryptography;
-
 
 namespace NethereumSample
 {
     class Program
     {
-        public static BigInteger Random32Bytes()
+        static async Task Main(string[] args)
         {
-            byte[] number = new byte[32];
-            RandomNumberGenerator rng = RandomNumberGenerator.Create();
-            rng.GetBytes(number);
-            number[number.Length - 1] &= (byte)0x7F; //force sign bit to positive
-            return new BigInteger(number);
-        }
-
-        static void Main(string[] args)
-        {
-            var privateKey = "YOUR_PRIVATE_KEY_HERE";
-            var signer = new EthereumMessageSigner();
-            var abiEncode = new ABIEncode();
-            var orderHash = abiEncode.GetSha3ABIEncodedPacked(
-                new ABIValue("bytes32", "0x2f89ac57b87363c7e0e88e67aff7424bf977605de87285485181da598fd1f5c7".HexToByteArray()), // marketHash
-                new ABIValue("address", "0x6A383cf1F8897585718DCA629a8f1471339abFe4"), // baseToken
-                new ABIValue("uint256", BigInteger.Parse("1000000000000000000000")), // totalBetSize
-                new ABIValue("uint256", BigInteger.Parse("51302654005356720000")), // percentageOdds
-                new ABIValue("uint256", BigInteger.Parse("2209006800")), // expiry (FIXED!), use apiExpiry for the expiry of the orders on sportx.bet
-                new ABIValue("uint256", BigInteger.Parse("11088371513674221491423763797610298526004404436355568229714515396917752811892")), // salt, you can use Random.bytes32
-                new ABIValue("address", "0x9883D5e7dC023A441A01Ef95aF406C69926a0AB6"), // maker
-                new ABIValue("address", "0x3259E7Ccc0993368fCB82689F5C534669A0C06ca"), // executor
-                new ABIValue("bool", true) // isMakerBettingOutcomeOne
+            var privateKey = Environment.GetEnvironmentVariable("PRIVATE_KEY");
+            if (privateKey == null)
+            {
+                throw new Exception("PRIVATE_KEY is not defined");
+            }
+            var marketHash = "0x2f89ac57b87363c7e0e88e67aff7424bf977605de87285485181da598fd1f5c7";
+            var baseToken = "0x6A383cf1F8897585718DCA629a8f1471339abFe4";
+            var totalBetSize = BigInteger.Parse("1000000000000000000000");
+            var percentageOdds = BigInteger.Parse("51302654005356720000");
+            var expiry = BigInteger.Parse("2209006800");
+            var salt = BigInteger.Parse(
+                "11088371513674221491423763797610298526004404436355568229714515396917752811892"
             );
-            var signature = signer.Sign(orderHash, privateKey);
-            Console.WriteLine("Order Hash: " + orderHash.ToHex());
-            Console.WriteLine("Signature: " + signature.ToString());
-            Console.WriteLine("Random bytes: " + Random32Bytes());
+            var maker = "0x9883D5e7dC023A441A01Ef95aF406C69926a0AB6";
+            var executor = "0x3259E7Ccc0993368fCB82689F5C534669A0C06ca";
+            var isMakerBettingOutcomeOne = true;
+            var order = new Order(
+                marketHash,
+                baseToken,
+                totalBetSize,
+                percentageOdds,
+                maker,
+                executor,
+                isMakerBettingOutcomeOne
+            );
+            Console.WriteLine("Order hash: " + order.GetHash().ToHex(true));
+            Console.WriteLine("Order signature: " + order.GetSignature(privateKey));
+            var result = await Order.GetCancelSignature(
+                new string[]
+                {
+                    "0x2bceef90e74501b1aeed3ef791be02e9f88b42a7edb94943ce2f64d15bdaed7e",
+                    "0x09ab58e1d404063ae36783cecf9dd3e758075bef891d3962a26035be008ad02f"
+                },
+                privateKey
+            );
+            Console.WriteLine("Cancel signature: " + result);
         }
     }
 }

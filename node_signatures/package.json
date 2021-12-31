@@ -1,0 +1,17 @@
+{
+  "name": "node_signatures",
+  "version": "1.0.0",
+  "description": "Module to return correct EIP712 signatures for cancel and filling orders with the API",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "tsc"
+  },
+  "author": "Julian Wilson <julian@sportx.bet>",
+  "license": "ISC",
+  "dependencies": {
+    "@types/eth-sig-util": "2.1.0",
+    "eth-sig-util": "2.5.2",
+    "typescript": "^4.5.4"
+  }
+}

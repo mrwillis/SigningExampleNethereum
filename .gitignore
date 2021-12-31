@@ -1,3 +1,5 @@
 bin
 obj
 .vscode
+node_signatures/node_modules
+node_signatures/dist*
