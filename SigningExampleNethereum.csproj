@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="Jering.Javascript.NodeJS" Version="6.3.0" />
     <PackageReference Include="Nethereum.Web3" Version="4.1.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
 </Project>

@@ -30,9 +30,10 @@ function getCancelOrderEIP712Payload(orders: string[], chainId: number) {
 export = function getCancelOrderSignature(
   callback: any,
   orders: string[],
-  privateKey: string
+  privateKey: string,
+  chainId: number
 ) {
-  const payload = getCancelOrderEIP712Payload(orders, 137);
+  const payload = getCancelOrderEIP712Payload(orders, chainId);
   const bufferPrivateKey = Buffer.from(privateKey.substring(2), "hex");
   const signature = (ethSigUtil as any).signTypedData_v4(bufferPrivateKey, {
     data: payload,

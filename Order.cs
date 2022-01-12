@@ -4,13 +4,38 @@ using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.ABI;
 using Nethereum.Signer;
 using Jering.Javascript.NodeJS;
-using System.Diagnostics;
+using Newtonsoft.Json;
 
 namespace NethereumSample
 {
     public static class GlobalVar
     {
         public const string JS_FILE_LOCATION = "./node_signatures/dist/main.js";
+    }
+
+    class BigIntegerConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(BigInteger);
+        }
+
+        public override object? ReadJson(
+            JsonReader reader,
+            Type objectType,
+            object? existingValue,
+            JsonSerializer serializer
+        )
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+        {
+            var bigInt = (BigInteger)value;
+            var stringBigInt = value.ToString();
+            writer.WriteValue(stringBigInt);
+        }
     }
 
     class Order
@@ -24,35 +49,24 @@ namespace NethereumSample
             return new BigInteger(number);
         }
 
+        public long apiExpiry;
+
         public readonly BigInteger expiry = BigInteger.Parse("2209006800");
         public string marketHash;
         public string baseToken;
+
+        [JsonConverter(typeof(BigIntegerConverter))]
         public BigInteger totalBetSize;
+
+        [JsonConverter(typeof(BigIntegerConverter))]
         public BigInteger percentageOdds;
         public string maker;
         public string executor;
         public bool isMakerBettingOutcomeOne;
+
+        [JsonConverter(typeof(BigIntegerConverter))]
         public BigInteger salt;
 
-        public Order(
-            string marketHash,
-            string baseToken,
-            BigInteger totalBetSize,
-            BigInteger percentageOdds,
-            string maker,
-            string executor,
-            bool isMakerBettingOutcomeOne
-        )
-        {
-            this.marketHash = marketHash;
-            this.baseToken = baseToken;
-            this.totalBetSize = totalBetSize;
-            this.percentageOdds = percentageOdds;
-            this.maker = maker;
-            this.executor = executor;
-            this.isMakerBettingOutcomeOne = isMakerBettingOutcomeOne;
-            this.salt = Random32Bytes();
-        }
         public string GetSignature(string privateKey)
         {
             var signer = new EthereumMessageSigner();
@@ -60,15 +74,34 @@ namespace NethereumSample
             return signer.Sign(hash, privateKey);
         }
 
+        public SignedOrder GetSignedOrder(string privateKey)
+        {
+            var signature = this.GetSignature(privateKey);
+            return new SignedOrder
+            {
+                marketHash = this.marketHash,
+                baseToken = this.baseToken,
+                totalBetSize = this.totalBetSize,
+                percentageOdds = this.percentageOdds,
+                maker = this.maker,
+                executor = this.executor,
+                isMakerBettingOutcomeOne = this.isMakerBettingOutcomeOne,
+                apiExpiry = this.apiExpiry,
+                salt = this.salt,
+                signature = signature
+            };
+        }
+
         public static async Task<string?> GetCancelSignature(
             string[] orderHashes,
-            string privateKey
+            string privateKey,
+            int chainId
         )
         {
             // Invoke javascript
             string? result = await StaticNodeJSService.InvokeFromFileAsync<string>(
                 GlobalVar.JS_FILE_LOCATION,
-                args: new object[] { orderHashes, privateKey }
+                args: new object[] { orderHashes, privateKey, 80001 }
             );
             return result;
         }
@@ -89,5 +122,10 @@ namespace NethereumSample
             );
             return orderHash;
         }
+    }
+
+    class SignedOrder : Order
+    {
+        public string signature;
     }
 }
