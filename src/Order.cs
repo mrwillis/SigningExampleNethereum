@@ -6,7 +6,7 @@ using Nethereum.Signer;
 using Jering.Javascript.NodeJS;
 using Newtonsoft.Json;
 
-namespace NethereumSample
+namespace SigningExampleNethereum
 {
     public static class GlobalVar
     {
@@ -101,7 +101,7 @@ namespace NethereumSample
             // Invoke javascript
             string? result = await StaticNodeJSService.InvokeFromFileAsync<string>(
                 GlobalVar.JS_FILE_LOCATION,
-                args: new object[] { orderHashes, privateKey, 80001 }
+                args: new object[] { orderHashes, privateKey, chainId }
             );
             return result;
         }
