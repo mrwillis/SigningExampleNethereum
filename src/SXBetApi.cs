@@ -1,9 +1,10 @@
 using Newtonsoft.Json;
 using System.Text;
+using System.Numerics;
 
-namespace NethereumSample
+namespace SigningExampleNethereum
 {
-    class SportXAPI
+    class SXBetApi
     {
         static readonly HttpClient client = new HttpClient();
 
@@ -17,6 +18,30 @@ namespace NethereumSample
             var httpContent = new StringContent(serialized, Encoding.UTF8, "application/json");
             HttpResponseMessage response = await client.PostAsync(
                 url + "/orders/new",
+                httpContent
+            );
+            if (response.Content != null)
+            {
+                return await response.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                throw new Exception("Content is null");
+            }
+        }
+
+        public async Task<string> CancelAllOrders(
+            string signature,
+            string salt,
+            string maker,
+            BigInteger timestamp
+        )
+        {
+            var obj = new { signature, salt, maker, timestamp };
+            var serialized = JsonConvert.SerializeObject(obj);
+            var httpContent = new StringContent(serialized, Encoding.UTF8, "application/json");
+            HttpResponseMessage response = await client.PostAsync(
+                url + "/orders/cancel/all",
                 httpContent
             );
             if (response.Content != null)

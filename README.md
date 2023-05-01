@@ -1,4 +1,4 @@
-# SportX.bet C# examples
+# SX.bet C# examples
 
 This repo contains some examples for signing various order operations on sportx.bet using C#. Currently has examples for the following:
 

@@ -6,11 +6,12 @@ using Nethereum.Signer;
 using Jering.Javascript.NodeJS;
 using Newtonsoft.Json;
 
-namespace NethereumSample
+namespace SigningExampleNethereum
 {
     public static class GlobalVar
     {
-        public const string JS_FILE_LOCATION = "./node_signatures/dist/main.js";
+        public const string CANCEL_ORDERS_V1_JS_FILE_LOCATION = "./node_signatures/dist/main.js";
+        public const string CANCEL_ALL_ORDERS_FILE_LOCATION = "./node_signatures/dist/cancelAllSignature.js";
     }
 
     class BigIntegerConverter : JsonConverter
@@ -100,8 +101,22 @@ namespace NethereumSample
         {
             // Invoke javascript
             string? result = await StaticNodeJSService.InvokeFromFileAsync<string>(
-                GlobalVar.JS_FILE_LOCATION,
-                args: new object[] { orderHashes, privateKey, 80001 }
+                GlobalVar.CANCEL_ORDERS_V1_JS_FILE_LOCATION,
+                args: new object[] { orderHashes, privateKey, chainId }
+            );
+            return result;
+        }
+
+        public static async Task<string?> GetCancelAllSignature(
+            string salt,
+            string timestamp,
+            string privateKey,
+            int chainId
+        ) {
+               // Invoke javascript
+            string? result = await StaticNodeJSService.InvokeFromFileAsync<string>(
+                GlobalVar.CANCEL_ALL_ORDERS_FILE_LOCATION,
+                args: new object[] { salt, timestamp, privateKey, chainId }
             );
             return result;
         }
