@@ -3,7 +3,6 @@ using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Signer;
 using Nethereum.ABI.EIP712;
 using System.Numerics;
-using System.Security.Cryptography;
 
 namespace SigningExampleNethereum
 {
@@ -20,7 +19,7 @@ namespace SigningExampleNethereum
         }
 
         //The generic Typed schema defintion for this message
-        private static TypedData<SaltDomain> getTypedDefinition(BigInteger salt, BigInteger chainId)
+        private static TypedData<SaltDomain> getTypedDefinition(byte[] salt, BigInteger chainId)
         {
             return new TypedData<SaltDomain>
             {
@@ -31,38 +30,21 @@ namespace SigningExampleNethereum
                     ChainId = chainId,
                     Salt = salt
                 },
-                Types = new Dictionary<string, MemberDescription[]>
-                {
-                    ["EIP712Domain"] = new[]
-                    {
-                        new MemberDescription {Name = "name", Type = "string"},
-                        new MemberDescription {Name = "version", Type = "string"},
-                        new MemberDescription {Name = "chainId", Type = "uint256"},
-                        new MemberDescription {Name = "salt", Type = "bytes32"},
-                    },
-                    ["Details"] = new[]
-                    {
-                        new MemberDescription {Name = "timestamp", Type = "uint256"},
-                    },
-                },
-                PrimaryType = "Details",
+                Types = MemberDescriptionFactory.GetTypesMemberDescription(typeof(SaltDomain), typeof(Details)),
+                PrimaryType = nameof(Details),
             };
         }
 
-        private static string getCancelAllOrdersEIP712Payload(BigInteger chainId, BigInteger timestamp, EthECKey key)
+        public static string GetCancelAllOrdersEIP712Payload(BigInteger chainId, BigInteger timestamp, EthECKey key, byte[] salt)
         {
-            var typedData = getTypedDefinition(Utilities.Random32Bytes(), chainId);
+            var typedData = getTypedDefinition(salt, chainId);
 
-            var mail = new Details
+            var details = new Details
             {
                 Timestamp = timestamp
             };
       
-            var signature = _signer.SignTypedDataV4(mail, typedData, key);
-            var addressRecovered = _signer.RecoverFromSignatureV4(mail, typedData, signature);
-            var address = key.GetPublicAddress();
-            return signature;
+            return _signer.SignTypedDataV4(details, typedData, key);
         }
-
     }
 }
